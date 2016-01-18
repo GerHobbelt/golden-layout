@@ -58,7 +58,7 @@ lm.controls.DragProxy._template = '<div class="lm_dragProxy">' +
 											'<i class="lm_right"></i></li>' +
 										'</ul>' +
 									'</div>' +
-									'<div class="lm_content"></div>' +
+									'<div class="lm_content lm_content_resize"></div>' +
 								'</div>';
 
 lm.utils.copy( lm.controls.DragProxy.prototype, {

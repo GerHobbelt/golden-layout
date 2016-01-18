@@ -1391,6 +1391,9 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	].join( '' ));
 	
 	this._contentElement = this._element.find( '.lm_content' );
+        if (config.settings.resizeEnabled) {
+            this._contentElement.addClass('lm_content_resize');
+        }
 };
 
 lm.utils.copy( lm.container.ItemContainer.prototype, {
@@ -1875,7 +1878,7 @@ lm.controls.DragProxy._template = '<div class="lm_dragProxy">' +
 											'<i class="lm_right"></i></li>' +
 										'</ul>' +
 									'</div>' +
-									'<div class="lm_content"></div>' +
+									'<div class="lm_content lm_content_resize"></div>' +
 								'</div>';
 
 lm.utils.copy( lm.controls.DragProxy.prototype, {

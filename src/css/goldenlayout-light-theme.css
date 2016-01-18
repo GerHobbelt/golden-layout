@@ -4,6 +4,11 @@
 
 .lm_content{
 	background: #e1e1e1;
+	border: 1px solid #e1e1e1;
+}
+
+.lm_content_resize {
+	background: #e1e1e1;
 	border: 1px solid #ccc;
 }
 

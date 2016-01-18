@@ -16,6 +16,9 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	].join( '' ));
 	
 	this._contentElement = this._element.find( '.lm_content' );
+        if (config.settings.resizeEnabled) {
+            this._contentElement.addClass('lm_content_resize');
+        }
 };
 
 lm.utils.copy( lm.container.ItemContainer.prototype, {

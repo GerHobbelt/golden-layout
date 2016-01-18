@@ -1391,9 +1391,6 @@ lm.container.ItemContainer = function( config, parent, layoutManager ) {
 	].join( '' ));
 	
 	this._contentElement = this._element.find( '.lm_content' );
-        if (config.settings.resizeEnabled) {
-            this._contentElement.addClass('lm_content_resize');
-        }
 };
 
 lm.utils.copy( lm.container.ItemContainer.prototype, {
@@ -2345,12 +2342,14 @@ lm.utils.copy( lm.controls.HeaderButton.prototype, {
 		this.element.remove();
 	}
 });
-lm.controls.Splitter = function( isVertical, size ) {
+lm.controls.Splitter = function( isVertical, size, resizeEnabled ) {
 	this._isVertical = isVertical;
 	this._size = size;
 
-	this.element = this._createElement();
-	this._dragListener = new lm.utils.DragListener( this.element );
+	this.element = this._createElement(resizeEnabled);
+        if (resizeEnabled) {
+            this._dragListener = new lm.utils.DragListener( this.element );
+        }
 };
 
 lm.utils.copy( lm.controls.Splitter.prototype, {
@@ -2362,8 +2361,13 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 		this.element.remove();
 	},
 
-	_createElement: function() {
-		var element = $( '<div class="lm_splitter"><div class="lm_drag_handle"></div></div>' );
+	_createElement: function(resizeEnabled) {
+                var element;
+                if (resizeEnabled) {
+                    element = $( '<div class="lm_splitter lm_splitter_hover"><div class="lm_drag_handle"></div></div>' );
+                } else {
+                    element = $( '<div class="lm_splitter"><div></div></div>' );
+                }
 		element.addClass( 'lm_' + ( this._isVertical ? 'vertical' : 'horizontal' ) );
 		element[ this._isVertical ? 'height' : 'width' ]( this._size );
 
@@ -3389,8 +3393,8 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			index = this.contentItems.length;
 		}
 	
-		if( this._resizeEnabled && this.contentItems.length > 0 ) {
-			splitterElement = this._createSplitter( Math.max( 0, index - 1 ) ).element;
+		if( this.contentItems.length > 0 ) {
+			splitterElement = this._createSplitter( Math.max( 0, index - 1 ), this._resizeEnabled ).element;
 	
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
@@ -3448,7 +3452,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		 * Remove the splitter before the item or after if the item happens
 		 * to be the first in the row/column
 		 */
-		if( this._resizeEnabled && this._splitter[ splitterIndex ] ) {
+		if( this._splitter[ splitterIndex ] ) {
 			this._splitter[ splitterIndex ]._$destroy();
 			this._splitter.splice( splitterIndex, 1 );
 		}
@@ -3520,9 +3524,8 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	
 		lm.items.AbstractContentItem.prototype._$init.call( this );
 		
-                if (this._resizeEnabled)
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
-			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
+			this.contentItems[ i ].element.after( this._createSplitter( i, this._resizeEnabled ).element );
 		}
 	},
 	
@@ -3537,7 +3540,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_setAbsoluteSizes: function() {
 		var i,
-			totalSplitterSize = this._resizeEnabled ? ( this.contentItems.length - 1 ) * this._splitterSize : 0,
+			totalSplitterSize = ( this.contentItems.length - 1 ) * this._splitterSize,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
@@ -3663,12 +3666,14 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {lm.controls.Splitter}
 	 */
-	_createSplitter: function( index ) {
+	_createSplitter: function( index, resizeEnabled ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
-		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
-		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
-		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, resizeEnabled );
+                if (resizeEnabled) {
+                    splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
+                    splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
+                    splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+                }
 		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},

@@ -42,8 +42,8 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			index = this.contentItems.length;
 		}
 	
-		if( this._resizeEnabled && this.contentItems.length > 0 ) {
-			splitterElement = this._createSplitter( Math.max( 0, index - 1 ) ).element;
+		if( this.contentItems.length > 0 ) {
+			splitterElement = this._createSplitter( Math.max( 0, index - 1 ), this._resizeEnabled ).element;
 	
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
@@ -101,7 +101,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		 * Remove the splitter before the item or after if the item happens
 		 * to be the first in the row/column
 		 */
-		if( this._resizeEnabled && this._splitter[ splitterIndex ] ) {
+		if( this._splitter[ splitterIndex ] ) {
 			this._splitter[ splitterIndex ]._$destroy();
 			this._splitter.splice( splitterIndex, 1 );
 		}
@@ -173,9 +173,8 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	
 		lm.items.AbstractContentItem.prototype._$init.call( this );
 		
-                if (this._resizeEnabled)
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
-			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
+			this.contentItems[ i ].element.after( this._createSplitter( i, this._resizeEnabled ).element );
 		}
 	},
 	
@@ -190,7 +189,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_setAbsoluteSizes: function() {
 		var i,
-			totalSplitterSize = this._resizeEnabled ? ( this.contentItems.length - 1 ) * this._splitterSize : 0,
+			totalSplitterSize = ( this.contentItems.length - 1 ) * this._splitterSize,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,
@@ -316,12 +315,14 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {lm.controls.Splitter}
 	 */
-	_createSplitter: function( index ) {
+	_createSplitter: function( index, resizeEnabled ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize );
-		splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
-		splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
-		splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, resizeEnabled );
+                if (resizeEnabled) {
+                    splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
+                    splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
+                    splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+                }
 		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},

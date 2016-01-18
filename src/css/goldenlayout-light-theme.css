@@ -35,7 +35,7 @@
 	transition: opacity 200ms ease;
 }
 
-.lm_splitter:hover{
+.lm_splitter_hover:hover{
 	opacity: 1;
 	background: #bbb;
 }

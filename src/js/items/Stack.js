@@ -109,7 +109,9 @@ lm.utils.copy( lm.items.Stack.prototype, {
 
 	_$destroy: function() {
 		lm.items.AbstractContentItem.prototype._$destroy.call( this );
-		this.header._$destroy();
+                try {
+                    this.header._$destroy();
+                } catch (e) { }
 	},
 
 

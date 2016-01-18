@@ -7,6 +7,7 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
+        this._resizeEnabled = layoutManager.config.settings.resizeEnabled;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -41,7 +42,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 			index = this.contentItems.length;
 		}
 	
-		if( this.contentItems.length > 0 ) {
+		if( this._resizeEnabled && this.contentItems.length > 0 ) {
 			splitterElement = this._createSplitter( Math.max( 0, index - 1 ) ).element;
 	
 			if( index > 0 ) {
@@ -100,7 +101,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		 * Remove the splitter before the item or after if the item happens
 		 * to be the first in the row/column
 		 */
-		if( this._splitter[ splitterIndex ] ) {
+		if( this._resizeEnabled && this._splitter[ splitterIndex ] ) {
 			this._splitter[ splitterIndex ]._$destroy();
 			this._splitter.splice( splitterIndex, 1 );
 		}
@@ -172,6 +173,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	
 		lm.items.AbstractContentItem.prototype._$init.call( this );
 		
+                if (this._resizeEnabled)
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
 			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
 		}
@@ -188,7 +190,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 */
 	_setAbsoluteSizes: function() {
 		var i,
-			totalSplitterSize = ( this.contentItems.length - 1 ) * this._splitterSize,
+			totalSplitterSize = this._resizeEnabled ? ( this.contentItems.length - 1 ) * this._splitterSize : 0,
 			totalWidth = this.element.width(),
 			totalHeight = this.element.height(),
 			totalAssigned = 0,

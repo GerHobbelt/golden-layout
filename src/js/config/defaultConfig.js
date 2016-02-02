@@ -5,7 +5,7 @@ lm.config.defaultConfig = {
 		constrainDragToContainer: true,
 		reorderEnabled: true,
 		selectionEnabled: false,
-                resizeEnabled: true,
+                editable: true,
 		popoutWholeStack: false,
 		blockedPopoutsThrowError: true,
 		closePopoutsOnUnload: true,

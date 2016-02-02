@@ -8,6 +8,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	lm.utils.EventEmitter.call( this );
 
 	this.layoutManager = layoutManager;
+        this._editable = this.layoutManager.config.settings.editable;
 	this.element = $( lm.controls.Header._template );
 
 	if( this.layoutManager.config.settings.selectionEnabled === true ) {
@@ -22,7 +23,8 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
-
+        this._closeButton = null;
+        
 	this._createControls();
 };
 
@@ -55,6 +57,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 
 		tab = new lm.controls.Tab( this, contentItem );
+                tab.setEditable(this._editable);
 		
 		if( this.tabs.length === 0 ) {
 			this.tabs.push( tab );
@@ -180,7 +183,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		if( this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
 			label = this.layoutManager.config.labels.close;
-			new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
+			this._closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
 
@@ -253,6 +256,20 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		} else {
 			this.element.css( 'overflow', 'visible' );
 		}
-	}
+	},
+        
+        setEditable: function(editable) {
+            this._editable = editable;
+            if (this._closeButton) {
+                if (editable) {
+                    this._closeButton.element.show();
+                } else {
+                    this._closeButton.element.hide();
+                }
+            }
+            for( var i = 0; i < this.tabs.length; i++ ) {
+                this.tabs[i].setEditable(editable);
+            }
+        }
 });
 

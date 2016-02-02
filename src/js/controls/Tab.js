@@ -19,6 +19,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	this.contentItem.on( 'titleChanged', this.setTitle, this );
 
 	this._layoutManager = this.contentItem.layoutManager;
+        this._editable = this._layoutManager.config.settings.editable;
 
 	if( 
 		this._layoutManager.config.settings.reorderEnabled === true &&
@@ -115,6 +116,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onDragStart: function( x, y ) {
+                if (!this._editable) return;
 		if( this.contentItem.parent.isMaximised === true ) {
 			this.contentItem.parent.toggleMaximise();
 		}
@@ -159,5 +161,16 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	_onCloseClick: function( event ) {
 		event.stopPropagation();
 		this.header.parent.removeChild( this.contentItem );
-	}
+	},
+        
+        setEditable: function(editable) {
+            this._editable = editable;
+            if (this.contentItem.config.isClosable) {
+                if (editable) {
+                    this.closeElement.show();
+                } else {
+                    this.closeElement.hide();
+                }
+            }
+        }
 });

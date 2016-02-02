@@ -61,5 +61,14 @@ lm.utils.copy( lm.items.Component.prototype, {
 	 */
 	_$getArea: function() {
 		return null;
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            this._editable = editable;
+        }
 });

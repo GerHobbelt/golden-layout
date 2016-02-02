@@ -265,6 +265,19 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.isInitialised = true;
 		this.emit( 'initialised' );
 	},
+        
+	/**
+	 * Switches on/off layout content edit features
+	 *
+	 * @public
+	 * @param   {[bool]} editable true/false
+	 *
+	 * @returns {void}
+	 */
+        setEditable: function (editable) {
+            this.config.settings.editable = editable;
+            this.root.callDownwards('setEditable', [ editable ]);
+        },
 
 	/**
 	 * Updates the layout managers size

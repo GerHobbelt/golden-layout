@@ -38,6 +38,7 @@ lm.items.AbstractContentItem = function( layoutManager, config, parent ) {
 	this.layoutManager = layoutManager;
 	this._pendingEventPropagations = {};
 	this._throttledEvents = [ 'stateChanged' ];
+        this._editable = layoutManager.config.settings.editable;
 
 	this.on( lm.utils.EventEmitter.ALL_EVENT, this._propagateEvent, this );
 	
@@ -612,5 +613,15 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	_propagateEventToLayoutManager: function( name, event ) {
 		this._pendingEventPropagations[ name ] = false;
 		this.layoutManager.emit( name, event );
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            console.log(this.type + " editable = " + editable);
+        }
+        
 });

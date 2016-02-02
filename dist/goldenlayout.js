@@ -1,4 +1,4 @@
-(function($){var lm={"config":{},"container":{},"controls":{},"items":{},"errors":{},"utils":{}};
+(function($){var lm={"config":{},"container":{},"controls":{},"errors":{},"items":{},"utils":{}};
 
 lm.utils.F = function () {};
 	
@@ -688,6 +688,19 @@ lm.utils.copy( lm.LayoutManager.prototype, {
 		this.isInitialised = true;
 		this.emit( 'initialised' );
 	},
+        
+	/**
+	 * Switches on/off layout content edit features
+	 *
+	 * @public
+	 * @param   {[bool]} editable true/false
+	 *
+	 * @returns {void}
+	 */
+        setEditable: function (editable) {
+            this.config.settings.editable = editable;
+            this.root.callDownwards('setEditable', [ editable ]);
+        },
 
 	/**
 	 * Updates the layout managers size
@@ -1349,7 +1362,7 @@ lm.config.defaultConfig = {
 		constrainDragToContainer: true,
 		reorderEnabled: true,
 		selectionEnabled: false,
-                resizeEnabled: true,
+                editable: true,
 		popoutWholeStack: false,
 		blockedPopoutsThrowError: true,
 		closePopoutsOnUnload: true,
@@ -2077,6 +2090,7 @@ lm.controls.Header = function( layoutManager, parent ) {
 	lm.utils.EventEmitter.call( this );
 
 	this.layoutManager = layoutManager;
+        this._editable = this.layoutManager.config.settings.editable;
 	this.element = $( lm.controls.Header._template );
 
 	if( this.layoutManager.config.settings.selectionEnabled === true ) {
@@ -2091,7 +2105,8 @@ lm.controls.Header = function( layoutManager, parent ) {
 	this.parent.on( 'resize', this._updateTabSizes, this );
 	this.tabs = [];
 	this.activeContentItem = null;
-
+        this._closeButton = null;
+        
 	this._createControls();
 };
 
@@ -2124,6 +2139,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		}
 
 		tab = new lm.controls.Tab( this, contentItem );
+                tab.setEditable(this._editable);
 		
 		if( this.tabs.length === 0 ) {
 			this.tabs.push( tab );
@@ -2249,7 +2265,7 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		if( this.parent.config.isClosable && this.layoutManager.config.settings.showCloseIcon ) {
 			closeStack = lm.utils.fnBind( this.parent.remove, this.parent );
 			label = this.layoutManager.config.labels.close;
-			new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
+			this._closeButton = new lm.controls.HeaderButton( this, label, 'lm_close', closeStack );
 		}
 	},
 
@@ -2322,7 +2338,21 @@ lm.utils.copy( lm.controls.Header.prototype, {
 		} else {
 			this.element.css( 'overflow', 'visible' );
 		}
-	}
+	},
+        
+        setEditable: function(editable) {
+            this._editable = editable;
+            if (this._closeButton) {
+                if (editable) {
+                    this._closeButton.element.show();
+                } else {
+                    this._closeButton.element.hide();
+                }
+            }
+            for( var i = 0; i < this.tabs.length; i++ ) {
+                this.tabs[i].setEditable(editable);
+            }
+        }
 });
 
 
@@ -2342,14 +2372,12 @@ lm.utils.copy( lm.controls.HeaderButton.prototype, {
 		this.element.remove();
 	}
 });
-lm.controls.Splitter = function( isVertical, size, resizeEnabled ) {
+lm.controls.Splitter = function( isVertical, size ) {
 	this._isVertical = isVertical;
 	this._size = size;
 
-	this.element = this._createElement(resizeEnabled);
-        if (resizeEnabled) {
-            this._dragListener = new lm.utils.DragListener( this.element );
-        }
+	this.element = this._createElement();
+        this._dragListener = new lm.utils.DragListener( this.element );
 };
 
 lm.utils.copy( lm.controls.Splitter.prototype, {
@@ -2361,18 +2389,23 @@ lm.utils.copy( lm.controls.Splitter.prototype, {
 		this.element.remove();
 	},
 
-	_createElement: function(resizeEnabled) {
-                var element;
-                if (resizeEnabled) {
-                    element = $( '<div class="lm_splitter lm_splitter_hover"><div class="lm_drag_handle"></div></div>' );
-                } else {
-                    element = $( '<div class="lm_splitter"><div></div></div>' );
-                }
+	_createElement: function() {
+                var element = $( '<div class="lm_splitter lm_splitter_hover"><div class="lm_drag_handle"></div></div>' );
 		element.addClass( 'lm_' + ( this._isVertical ? 'vertical' : 'horizontal' ) );
 		element[ this._isVertical ? 'height' : 'width' ]( this._size );
 
 		return element;
-	}
+	},
+        
+        setEditable: function(editable) {
+            if (editable) {
+                this.element.addClass("lm_splitter_hover");
+                this.element.find("div").addClass("lm_drag_handle");
+            } else {
+                this.element.removeClass("lm_splitter_hover");
+                this.element.find("div").removeClass("lm_drag_handle");
+            }
+        }
 });
 
 /**
@@ -2396,6 +2429,7 @@ lm.controls.Tab = function( header, contentItem ) {
 	this.contentItem.on( 'titleChanged', this.setTitle, this );
 
 	this._layoutManager = this.contentItem.layoutManager;
+        this._editable = this._layoutManager.config.settings.editable;
 
 	if( 
 		this._layoutManager.config.settings.reorderEnabled === true &&
@@ -2492,6 +2526,7 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	 * @returns {void}
 	 */
 	_onDragStart: function( x, y ) {
+                if (!this._editable) return;
 		if( this.contentItem.parent.isMaximised === true ) {
 			this.contentItem.parent.toggleMaximise();
 		}
@@ -2536,7 +2571,18 @@ lm.utils.copy( lm.controls.Tab.prototype,{
 	_onCloseClick: function( event ) {
 		event.stopPropagation();
 		this.header.parent.removeChild( this.contentItem );
-	}
+	},
+        
+        setEditable: function(editable) {
+            this._editable = editable;
+            if (this.contentItem.config.isClosable) {
+                if (editable) {
+                    this.closeElement.show();
+                } else {
+                    this.closeElement.hide();
+                }
+            }
+        }
 });
 
 lm.controls.TransitionIndicator = function() {
@@ -2651,6 +2697,7 @@ lm.items.AbstractContentItem = function( layoutManager, config, parent ) {
 	this.layoutManager = layoutManager;
 	this._pendingEventPropagations = {};
 	this._throttledEvents = [ 'stateChanged' ];
+        this._editable = layoutManager.config.settings.editable;
 
 	this.on( lm.utils.EventEmitter.ALL_EVENT, this._propagateEvent, this );
 	
@@ -3225,7 +3272,17 @@ lm.utils.copy( lm.items.AbstractContentItem.prototype, {
 	_propagateEventToLayoutManager: function( name, event ) {
 		this._pendingEventPropagations[ name ] = false;
 		this.layoutManager.emit( name, event );
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            console.log(this.type + " editable = " + editable);
+        }
+        
 });
 /**
  * @param {[type]} layoutManager [description]
@@ -3290,7 +3347,16 @@ lm.utils.copy( lm.items.Component.prototype, {
 	 */
 	_$getArea: function() {
 		return null;
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            this._editable = editable;
+        }
 });
 lm.items.Root = function( layoutManager, config, containerElement ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, null );
@@ -3358,7 +3424,6 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
-        this._resizeEnabled = layoutManager.config.settings.resizeEnabled;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -3394,7 +3459,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		}
 	
 		if( this.contentItems.length > 0 ) {
-			splitterElement = this._createSplitter( Math.max( 0, index - 1 ), this._resizeEnabled ).element;
+			splitterElement = this._createSplitter( Math.max( 0, index - 1 )).element;
 	
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
@@ -3525,7 +3590,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		lm.items.AbstractContentItem.prototype._$init.call( this );
 		
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
-			this.contentItems[ i ].element.after( this._createSplitter( i, this._resizeEnabled ).element );
+			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
 		}
 	},
 	
@@ -3666,14 +3731,13 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {lm.controls.Splitter}
 	 */
-	_createSplitter: function( index, resizeEnabled ) {
+	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, resizeEnabled );
-                if (resizeEnabled) {
-                    splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
-                    splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
-                    splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
-                }
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize);
+                splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
+                splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
+                splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+                splitter.setEditable(this._editable);
 		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},
@@ -3706,6 +3770,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	_onSplitterDragStart: function( splitter ) {
+                if (!this._editable) return;
 		var items = this._getItemsForSplitter( splitter ),
 			minSize = this.layoutManager.config.dimensions[ this._isColumn ? 'minItemHeight' : 'minItemWidth' ];
 	
@@ -3725,6 +3790,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	_onSplitterDrag: function( splitter, offsetX, offsetY ) {
+                if (!this._editable) return;
 		var offset = this._isColumn ? offsetY : offsetX;
 	
 		if( offset > this._splitterMinPosition && offset < this._splitterMaxPosition ) {
@@ -3743,7 +3809,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	_onSplitterDragStop: function( splitter ) {
-
+                if (!this._editable) return;
 		var items = this._getItemsForSplitter( splitter ),
 			sizeBefore = items.before.element[ this._dimension ](),
 			sizeAfter = items.after.element[ this._dimension ](),
@@ -3759,7 +3825,19 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		});
 		
 		lm.utils.animFrame( lm.utils.fnBind( this.callDownwards, this, [ 'setSize' ] ) );
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            this._editable = editable;
+            for(var i = 0; i < this._splitter.length; i++ ) {
+                this._splitter[i].setEditable(editable);
+            }
+        }
 });
 lm.items.Stack = function( layoutManager, config, parent ) {
 	lm.items.AbstractContentItem.call( this, layoutManager, config, parent );
@@ -3776,6 +3854,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
+        this.header.setEditable(layoutManager.config.settings.editable);
 
 	if( layoutManager.config.settings.hasHeaders === true ) {
 		this.element.append( this.header.element );
@@ -4196,7 +4275,17 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		var highlightArea = this._contentAreaDimensions[ segment ].highlightArea;
 		this.layoutManager.dropTargetIndicator.highlightArea( highlightArea );
 		this._dropSegment = segment;
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            this._editable = editable;
+            this.header.setEditable(editable);
+        }
 });
 
 lm.utils.BubblingEvent = function( name, origin ) {

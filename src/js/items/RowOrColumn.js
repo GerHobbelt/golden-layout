@@ -7,7 +7,6 @@ lm.items.RowOrColumn = function( isColumn, layoutManager, config, parent ) {
 	this.element = $( '<div class="lm_item lm_' + ( isColumn ? 'column' : 'row' ) + '"></div>' );
 	this.childElementContainer = this.element;
 	this._splitterSize = layoutManager.config.dimensions.borderWidth;
-        this._resizeEnabled = layoutManager.config.settings.resizeEnabled;
 	this._isColumn = isColumn;
 	this._dimension = isColumn ? 'height' : 'width';
 	this._splitter = [];
@@ -43,7 +42,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		}
 	
 		if( this.contentItems.length > 0 ) {
-			splitterElement = this._createSplitter( Math.max( 0, index - 1 ), this._resizeEnabled ).element;
+			splitterElement = this._createSplitter( Math.max( 0, index - 1 )).element;
 	
 			if( index > 0 ) {
 				this.contentItems[ index - 1 ].element.after( splitterElement );
@@ -174,7 +173,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		lm.items.AbstractContentItem.prototype._$init.call( this );
 		
 		for( i = 0; i < this.contentItems.length - 1; i++ ) {
-			this.contentItems[ i ].element.after( this._createSplitter( i, this._resizeEnabled ).element );
+			this.contentItems[ i ].element.after( this._createSplitter( i ).element );
 		}
 	},
 	
@@ -315,14 +314,13 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 *
 	 * @returns {lm.controls.Splitter}
 	 */
-	_createSplitter: function( index, resizeEnabled ) {
+	_createSplitter: function( index ) {
 		var splitter;
-		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize, resizeEnabled );
-                if (resizeEnabled) {
-                    splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
-                    splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
-                    splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
-                }
+		splitter = new lm.controls.Splitter( this._isColumn, this._splitterSize);
+                splitter.on( 'drag', lm.utils.fnBind( this._onSplitterDrag, this, [ splitter ] ), this );
+                splitter.on( 'dragStop', lm.utils.fnBind( this._onSplitterDragStop, this, [ splitter ] ), this );
+                splitter.on( 'dragStart', lm.utils.fnBind( this._onSplitterDragStart, this, [ splitter ] ), this );
+                splitter.setEditable(this._editable);
 		this._splitter.splice( index, 0, splitter );
 		return splitter;
 	},
@@ -355,6 +353,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	_onSplitterDragStart: function( splitter ) {
+                if (!this._editable) return;
 		var items = this._getItemsForSplitter( splitter ),
 			minSize = this.layoutManager.config.dimensions[ this._isColumn ? 'minItemHeight' : 'minItemWidth' ];
 	
@@ -374,6 +373,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	_onSplitterDrag: function( splitter, offsetX, offsetY ) {
+                if (!this._editable) return;
 		var offset = this._isColumn ? offsetY : offsetX;
 	
 		if( offset > this._splitterMinPosition && offset < this._splitterMaxPosition ) {
@@ -392,7 +392,7 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 	 * @returns {void}
 	 */
 	_onSplitterDragStop: function( splitter ) {
-
+                if (!this._editable) return;
 		var items = this._getItemsForSplitter( splitter ),
 			sizeBefore = items.before.element[ this._dimension ](),
 			sizeAfter = items.after.element[ this._dimension ](),
@@ -408,5 +408,17 @@ lm.utils.copy( lm.items.RowOrColumn.prototype, {
 		});
 		
 		lm.utils.animFrame( lm.utils.fnBind( this.callDownwards, this, [ 'setSize' ] ) );
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            this._editable = editable;
+            for(var i = 0; i < this._splitter.length; i++ ) {
+                this._splitter[i].setEditable(editable);
+            }
+        }
 });

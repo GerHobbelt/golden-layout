@@ -13,6 +13,7 @@ lm.items.Stack = function( layoutManager, config, parent ) {
 
 	this.childElementContainer = $( '<div class="lm_items"></div>' );
 	this.header = new lm.controls.Header( layoutManager, this );
+        this.header.setEditable(layoutManager.config.settings.editable);
 
 	if( layoutManager.config.settings.hasHeaders === true ) {
 		this.element.append( this.header.element );
@@ -433,5 +434,15 @@ lm.utils.copy( lm.items.Stack.prototype, {
 		var highlightArea = this._contentAreaDimensions[ segment ].highlightArea;
 		this.layoutManager.dropTargetIndicator.highlightArea( highlightArea );
 		this._dropSegment = segment;
-	}
+	},
+        
+        /**
+         * Switches editable on/off for the content item
+         * @param {bool} editable
+         * @returns {void}
+         */
+        setEditable: function (editable) {
+            this._editable = editable;
+            this.header.setEditable(editable);
+        }
 });

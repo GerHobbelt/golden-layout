@@ -69,11 +69,6 @@
     "registry": "jspm",
     "dependencies": {
       "jquery": "^2.1.0"
-    },
-    "shim": {
-      "dist/goldenlayout": [
-        "jquery"
-      ]
     }
   }
 }

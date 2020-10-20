@@ -11,7 +11,7 @@
   "dependencies": {
     "walker": "1.0.6",
     "handlebars": "2.0.0-alpha.2",
-    "karma": "0.12.16"
+    "karma": "0.13.12"
   },
   "devDependencies": {
     "karma-jasmine": "~0.1.5",

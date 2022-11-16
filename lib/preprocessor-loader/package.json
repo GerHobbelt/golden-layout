@@ -39,14 +39,14 @@
   "bundleDependencies": false,
   "dependencies": {
     "fs": "0.0.2",
-    "loader-utils": "^0.2.11",
+    "loader-utils": "^1.4.2",
     "path": "^0.12.7"
   },
   "deprecated": false,
   "description": "Preprocessor loader for webpack.  Allows for regular expressions, callbacks, macros, similiar to the C preprocessor",
   "devDependencies": {
     "fs": "0.0.2",
-    "loader-utils": "^0.2.11",
+    "loader-utils": "^1.4.2",
     "path": "^0.12.7"
   },
   "homepage": "https://github.com/artificialtrends/preprocess-loader#readme",
